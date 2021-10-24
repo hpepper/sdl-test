@@ -1,0 +1,13 @@
+Create graphics with full screen
+Create load sprite
+Move sprite with controller
+Put in walls
+Collision detection, with walls
+Add projectiles
+Collision detection with projectiles
+Create point status line
+Create welcome page
+Select marker for player sprite
+Select colour for for player sprite
+  (Handle colour blind selection)
+  (Handle hard of seeing)
