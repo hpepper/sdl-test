@@ -1,6 +1,6 @@
 # TEMPLATE
 
-## Introdction
+## Introduction
 
 ### Purpose
 
