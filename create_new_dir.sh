@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Poppulate a new directory from the template directory.
+
 TARGET_DIR=$1
 SOURCE_DIR="00_dir_template"
 
@@ -22,5 +24,11 @@ fi
 cp --recursive ${SOURCE_DIR}/* ${TARGET_DIR}
 if [ $? != 0 ]; then
   echo "!!! copy from  '${SOURCE_DIR}/*' to '${TARGET_DIR}' failed: $?"
+  exit 3
+fi
+
+cp ${SOURCE_DIR}/.gitignore ${TARGET_DIR}
+if [ $? != 0 ]; then
+  echo "!!! copy from  '${SOURCE_DIR}/.gitignore' to '${TARGET_DIR}' failed: $?"
   exit 3
 fi
