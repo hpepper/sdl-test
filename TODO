@@ -1,10 +1,10 @@
-Create graphics with full screen
-Create load sprite
-Move sprite with controller
+Create Engine (SDL p21)(Killer game programming in Jave, p21)  (maybe capture the game engine run through times and count how often is has 0 mils left after a run-through.)
+Load and move sprite with controller
 Put in walls
 Collision detection, with walls
 Add projectiles
 Collision detection with projectiles
+Implement View-Model-Control pattern.
 Create point status line
 Create welcome page
 Select marker for player sprite
