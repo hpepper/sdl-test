@@ -2,7 +2,7 @@
 RUN_NAME=hello_texture
 IMAGE_NAME=test_image
 
-$(RUN_NAME): $(RUN_NAME).c test_image.bmp
+$(RUN_NAME): $(RUN_NAME).c $(IMAGE_NAME).bmp
 	gcc  -std=c99 -o $@ $(RUN_NAME).c `sdl2-config --cflags` `sdl2-config --libs`
 
 
