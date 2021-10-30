@@ -9,12 +9,6 @@
 
 Uint32 framesPerSecond = 50;
 
-struct coordinates
-{
-    Uint32 x;
-    Uint32 y;
-};
-
 // TODO UPS -  Updates per second
 
 // This is an arbitrary number
@@ -48,16 +42,16 @@ void initializeScene(SDL_Renderer *renderer, SDL_Texture *riderTexture)
 // This is where all coordinates get calculates
 //   and I assume collision detection etc.?
 //   so in reality the x an y of the sprite should be updated here.
-struct coordinates gameUpdate(int loopIteration)
+SDL_Point gameUpdate(int loopIteration)
 {
-    struct coordinates textureTopleftCorner;
+    SDL_Point textureTopleftCorner;
     textureTopleftCorner.x = loopIteration * (VIDEO_WIDTH/NUMBER_OF_FRAMES_IN_ANIMATION);
     textureTopleftCorner.y = loopIteration * (VIDEO_HEIGHT/NUMBER_OF_FRAMES_IN_ANIMATION);
     SDL_Delay(1);
     return(textureTopleftCorner);
 }
 
-void screenRender(SDL_Renderer *renderer, SDL_Texture *riderTexture, struct coordinates textureTopleftCorner)
+void screenRender(SDL_Renderer *renderer, SDL_Texture *riderTexture, SDL_Point textureTopleftCorner)
 {
     SDL_RenderClear(renderer);
 
@@ -121,7 +115,7 @@ int main(int argc, char *args[])
         // TODO this counter wraps around after this program has been running for 49 days
         startMiliseconds = SDL_GetTicks();
 
-        struct coordinates  textureTopleftCorner = gameUpdate(loopIteration);
+        SDL_Point textureTopleftCorner = gameUpdate(loopIteration);
         screenRender(renderer, riderTexture, textureTopleftCorner);
         showRenderedScreen(renderer);
         deltaMiliseconds = milisecondsPerFrame - (SDL_GetTicks() - startMiliseconds);
