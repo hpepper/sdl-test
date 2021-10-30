@@ -7,13 +7,15 @@
 
 #define NUMBER_OF_FRAMES_IN_ANIMATION 250
 
+#define MAX_FRAMES_TO_SKIP 5
+
 Uint32 framesPerSecond = 50;
 
 // TODO UPS -  Updates per second
 
 // This is an arbitrary number
 // TODO find out what this number should be. On a multi lCPPU couldn't this simply be 0?
-#define MINIMUM_MILISECONDS_BETWEEN_FRAMES 2
+#define MINIMUM_MILISECONDS_BETWEEN_FRAMES 1
 
 SDL_Texture *loadSceneAssets(SDL_Renderer *renderer)
 {
@@ -21,14 +23,17 @@ SDL_Texture *loadSceneAssets(SDL_Renderer *renderer)
     SDL_Texture *riderTexture = SDL_CreateTextureFromSurface(renderer, tempSurface);
     SDL_FreeSurface(tempSurface);
 
-    return(riderTexture);
+    return (riderTexture);
 }
 
 void initializeScene(SDL_Renderer *renderer, SDL_Texture *riderTexture)
 {
     SDL_RenderClear(renderer);
     SDL_Rect sourceRectangle;
-    if ( SDL_QueryTexture(riderTexture, NULL, NULL, &sourceRectangle.w, &sourceRectangle.h) != 0 ) { printf("SDL_Init failed: %s\n", SDL_GetError()); } 
+    if (SDL_QueryTexture(riderTexture, NULL, NULL, &sourceRectangle.w, &sourceRectangle.h) != 0)
+    {
+        printf("SDL_Init failed: %s\n", SDL_GetError());
+    }
 
     SDL_Rect destinationRectangle;
     destinationRectangle.x = sourceRectangle.x = 0;
@@ -45,10 +50,10 @@ void initializeScene(SDL_Renderer *renderer, SDL_Texture *riderTexture)
 SDL_Point gameUpdate(int loopIteration)
 {
     SDL_Point textureTopleftCorner;
-    textureTopleftCorner.x = loopIteration * (VIDEO_WIDTH/NUMBER_OF_FRAMES_IN_ANIMATION);
-    textureTopleftCorner.y = loopIteration * (VIDEO_HEIGHT/NUMBER_OF_FRAMES_IN_ANIMATION);
+    textureTopleftCorner.x = loopIteration * (VIDEO_WIDTH / NUMBER_OF_FRAMES_IN_ANIMATION);
+    textureTopleftCorner.y = loopIteration * (VIDEO_HEIGHT / NUMBER_OF_FRAMES_IN_ANIMATION);
     SDL_Delay(1);
-    return(textureTopleftCorner);
+    return (textureTopleftCorner);
 }
 
 void screenRender(SDL_Renderer *renderer, SDL_Texture *riderTexture, SDL_Point textureTopleftCorner)
@@ -56,7 +61,10 @@ void screenRender(SDL_Renderer *renderer, SDL_Texture *riderTexture, SDL_Point t
     SDL_RenderClear(renderer);
 
     SDL_Rect sourceRectangle;
-    if ( SDL_QueryTexture(riderTexture, NULL, NULL, &sourceRectangle.w, &sourceRectangle.h) != 0 ) { printf("SDL_Init failed: %s\n", SDL_GetError()); } 
+    if (SDL_QueryTexture(riderTexture, NULL, NULL, &sourceRectangle.w, &sourceRectangle.h) != 0)
+    {
+        printf("SDL_Init failed: %s\n", SDL_GetError());
+    }
 
     SDL_Rect destinationRectangle;
     sourceRectangle.x = 0;
@@ -77,9 +85,13 @@ void showRenderedScreen(SDL_Renderer *renderer)
 
 int main(int argc, char *args[])
 {
-    Uint32 milisecondsPerFrame = 1000 / framesPerSecond;
+    long milisecondsPerFrame = (long)(1000 / framesPerSecond);
     Uint32 startMiliseconds = 0;
-    long deltaMiliseconds = 0;
+    Uint32 currentMiliseconds = 0;
+    long elapsedMiliseconds = 0;
+    long sleepTimeMiliseconds = 0;
+    // The excess concept is from 'killer game programming in java' p36
+    long excessTimeSpentMiliseconds = 0;
 
     // See: http://wiki.libsdl.org/SDL_Init
     SDL_Init(SDL_INIT_VIDEO);
@@ -109,28 +121,53 @@ int main(int argc, char *args[])
     // this is just to have an automatic end to the loop.
     //  normally it would be the user that would end this loop.
     int loopIteration = 0;
+    startMiliseconds = SDL_GetTicks();
     // TODO move a box accross the screen in 10 seconds
     while (running == SDL_TRUE)
     {
         // TODO this counter wraps around after this program has been running for 49 days
-        startMiliseconds = SDL_GetTicks();
 
         SDL_Point textureTopleftCorner = gameUpdate(loopIteration);
         screenRender(renderer, riderTexture, textureTopleftCorner);
+
+        // TODO should this be moved after the delta calcultations?
+        //   I don't think so, but (,p176 thinks so)
         showRenderedScreen(renderer);
-        deltaMiliseconds = milisecondsPerFrame - (SDL_GetTicks() - startMiliseconds);
-        // the '|| (deltaMiliseconds > 500 )' is because I saw this calculated as: DDD deltaMiliseconds = 4294967293
-        if ( (deltaMiliseconds < MINIMUM_MILISECONDS_BETWEEN_FRAMES)
-            || (deltaMiliseconds > 500 )
-        )
+
+        // Getting the elapsed and current time this way will entsure the full round through the while is included.
+        currentMiliseconds = SDL_GetTicks();
+        elapsedMiliseconds = (long)(currentMiliseconds - startMiliseconds);
+        startMiliseconds = currentMiliseconds;
+
+        sleepTimeMiliseconds = milisecondsPerFrame - elapsedMiliseconds;
+        if (sleepTimeMiliseconds < 0)
+        {
+            // this is actually + because sleepTimeMiliseconds is < 0.
+            excessTimeSpentMiliseconds -= sleepTimeMiliseconds;
+        }
+
+        if (excessTimeSpentMiliseconds > milisecondsPerFrame)
+        {
+            printf("WWW skipping frames because  excessTimeSpentMiliseconds(%ld) > milisecondsPerFrame(%ld)\n", excessTimeSpentMiliseconds, milisecondsPerFrame);
+            int framesSkipped = 0;
+            while ((excessTimeSpentMiliseconds > milisecondsPerFrame) && (framesSkipped < MAX_FRAMES_TO_SKIP))
+            {
+                // ++loopIteration because the update has to be called on the new value.
+                gameUpdate(++loopIteration);
+                excessTimeSpentMiliseconds -= milisecondsPerFrame;
+                framesSkipped++;
+            }
+        }
+        // the '|| (sleepTimeMiliseconds > 500 )' is because I saw this calculated as: DDD sleepTimeMiliseconds = 4294967293
+        if ((sleepTimeMiliseconds < MINIMUM_MILISECONDS_BETWEEN_FRAMES) || (sleepTimeMiliseconds > 500))
         {
             // TODO Update the game state without rendering until it catches up. P52 Killer game programming in java.
             // TODO log telemetry about the wait time?
-            deltaMiliseconds = MINIMUM_MILISECONDS_BETWEEN_FRAMES;
+            sleepTimeMiliseconds = MINIMUM_MILISECONDS_BETWEEN_FRAMES;
         }
 
-        printf("DDD deltaMiliseconds = %ld\n", deltaMiliseconds);
-        SDL_Delay(deltaMiliseconds);
+        printf("DDD sleepTimeMiliseconds = %ld, elapsedMiliseconds = %ld\n", sleepTimeMiliseconds, elapsedMiliseconds);
+        SDL_Delay(sleepTimeMiliseconds);
         loopIteration++;
         if (loopIteration >= NUMBER_OF_FRAMES_IN_ANIMATION)
         {
